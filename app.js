@@ -4,11 +4,14 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 require('dotenv').config();
+const cors = require('cors');
+
 
 var indexRouter = require('./src/routes/index');
-var usersRouter = require('./src/routes/userRoutes');
+var usersRouter = require('./src/routes/user');
 
 var app = express();
+app.use(cors());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
