@@ -1,9 +1,10 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const path = require('path');
+const router = express.Router();
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+router.get('/', (req, res) => {
+  const svelteBuildPath = path.join(__dirname, '../../build/index.html'); // Svelte 빌드 파일 경로
+  res.sendFile(svelteBuildPath);
 });
 
 module.exports = router;
