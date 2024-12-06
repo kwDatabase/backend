@@ -1,7 +1,6 @@
 var express = require('express');
-const db = require('../config/db');
+const db = require('../../config/db');
 
-// 모든 권한 조회
 exports.SelectAllAuth = (req, res) => {
     db.query("SELECT Id, Name FROM AUTH ORDER BY Name", (err, results) => {
         if (err) return res.status(500).send(err);
@@ -9,7 +8,6 @@ exports.SelectAllAuth = (req, res) => {
     });
 };
 
-// 모든 권한 그룹 조회
 exports.SelectAllAuthGroups = (req, res) => {
     const query = `
         SELECT 
@@ -37,7 +35,6 @@ exports.SelectAllAuthGroups = (req, res) => {
     db.query(query, (err, results) => {
         if (err) return res.status(500).send(err);
         
-        // JSON 문자열을 실제 배열로 파싱하고 null 값 처리
         const formattedResults = results.map(group => {
             let auths = [];
             try {
@@ -57,7 +54,6 @@ exports.SelectAllAuthGroups = (req, res) => {
     });
 };
 
-// 권한 그룹 생성
 exports.CreateAuthGroup = (req, res) => {
     const { name, auths } = req.body;
     
@@ -69,7 +65,6 @@ exports.CreateAuthGroup = (req, res) => {
         const Enter_Date = date.getFullYear() + String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0');
         const Enter_Time = String(date.getHours()).padStart(2, '0') + String(date.getMinutes()).padStart(2, '0');
         
-        // 권한 매핑 추가
         const values = auths.map(authId => [
             groupId,
             authId,
@@ -87,17 +82,14 @@ exports.CreateAuthGroup = (req, res) => {
     });
 };
 
-// 권한 그룹 수정
 exports.UpdateAuthGroup = (req, res) => {
     const { id } = req.params;
     const { name, auths } = req.body;
     
-    // 트랜잭션 시작
     db.beginTransaction(async (err) => {
         if (err) return res.status(500).send(err);
 
         try {
-            // 1. 권한 그룹 이름 업데이트
             await new Promise((resolve, reject) => {
                 db.query('UPDATE AUTH_GROUP_NAME SET Name = ? WHERE Id = ?', [name, id], (err) => {
                     if (err) reject(err);
@@ -105,7 +97,6 @@ exports.UpdateAuthGroup = (req, res) => {
                 });
             });
 
-            // 2. 기존 권한 매핑 삭제
             await new Promise((resolve, reject) => {
                 db.query('DELETE FROM AUTH_GROUP WHERE GROUP_ID = ?', [id], (err) => {
                     if (err) reject(err);
@@ -113,7 +104,6 @@ exports.UpdateAuthGroup = (req, res) => {
                 });
             });
 
-            // 3. 새로운 권한 매핑 추가
             if (auths && auths.length > 0) {
                 const date = new Date();
                 const Enter_Date = date.getFullYear() + String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0');
@@ -135,7 +125,6 @@ exports.UpdateAuthGroup = (req, res) => {
                 });
             }
 
-            // 트랜잭션 커밋
             db.commit((err) => {
                 if (err) {
                     return db.rollback(() => {
@@ -153,7 +142,6 @@ exports.UpdateAuthGroup = (req, res) => {
     });
 };
 
-// 권한 그룹 삭제
 exports.DeleteAuthGroup = (req, res) => {
     const { id } = req.params;
     

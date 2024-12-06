@@ -1,5 +1,5 @@
 var express = require('express');
-const db = require('../config/db');
+const db = require('../../config/db');
 
 exports.SelectAllCategory = (req, res) => {
     db.query("SELECT c.Id , c.name, c.sort_number AS category_sort_number, s.sub_id, s.name AS sub_category_name, s.sort_number AS sub_category_sort_number FROM Product_Category c LEFT JOIN Product_Sub_Category s ON c.Id = s.Category_Id;", (err, results) => {
@@ -7,17 +7,15 @@ exports.SelectAllCategory = (req, res) => {
         const categoriesMap = new Map();
 
         results.forEach(row => {
-          // Find or create a category object
           if (!categoriesMap.has(row.Id)) {
             categoriesMap.set(row.Id, {
               Id: row.Id,
               name: row.name,
               sort_number: row.category_sort_number,
-              sub_category: [] // Initialize empty array for sub_categories
+              sub_category: []
             });
           }
 
-          // If the row has a sub_id, push it to the sub_categories array
           if (row.sub_id) {
             const category = categoriesMap.get(row.Id);
             category.sub_category.push({
@@ -28,7 +26,6 @@ exports.SelectAllCategory = (req, res) => {
           }
         });
 
-        // Convert map to array of categories
         const categories = Array.from(categoriesMap.values());
         console.log(categories);
         res.json(categories);

@@ -1,6 +1,5 @@
-const db = require('../config/db');
+const db = require('../../config/db');
 
-// 대시보드 통계 데이터 조회
 exports.GetDashboardStats = (req, res) => {
     db.query(`
         SELECT 
@@ -13,7 +12,6 @@ exports.GetDashboardStats = (req, res) => {
     });
 };
 
-// 사용자 활동 데이터 조회 
 exports.GetUserActivityTrend = (req, res) => {
     db.query(`
         SELECT 
@@ -29,7 +27,6 @@ exports.GetUserActivityTrend = (req, res) => {
     });
 };
 
-// 권한 그룹 분포 데이터 조회
 exports.GetAuthGroupDistribution = (req, res) => {
     db.query(`
         SELECT 
@@ -44,7 +41,6 @@ exports.GetAuthGroupDistribution = (req, res) => {
     });
 };
 
-// 카테고리별 판매 현황
 exports.GetCategorySales = (req, res) => {
     db.query(`
         SELECT 
@@ -62,7 +58,6 @@ exports.GetCategorySales = (req, res) => {
     });
 };
 
-// 서브카테고리별 상품 현황
 exports.GetSubCategoryProducts = (req, res) => {
     db.query(`
         SELECT 
@@ -81,7 +76,6 @@ exports.GetSubCategoryProducts = (req, res) => {
     });
 };
 
-// 인기 상품 TOP 10
 exports.GetPopularProducts = (req, res) => {
     db.query(`
         SELECT 
@@ -106,7 +100,6 @@ exports.GetPopularProducts = (req, res) => {
     });
 };
 
-// 가격대별 상품 분포
 exports.GetPriceDistribution = (req, res) => {
     db.query(`
         SELECT 
@@ -136,7 +129,6 @@ exports.GetPriceDistribution = (req, res) => {
     });
 };
 
-// 최근 거래 활동
 exports.GetRecentActivities = (req, res) => {
     db.query(`
         SELECT 

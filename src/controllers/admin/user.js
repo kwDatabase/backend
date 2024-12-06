@@ -1,7 +1,6 @@
 var express = require('express');
-const db = require('../config/db');
+const db = require('../../config/db');
 
-// 모든 사용자 조회
 exports.SelectAllUser = (req, res) => {
     const query = `
         SELECT 
@@ -34,7 +33,6 @@ exports.SelectAllUser = (req, res) => {
     });
 };
 
-// 권한 그룹 목록 조회
 exports.GetAuthGroups = (req, res) => {
     const query = 'SELECT Id, Name FROM AUTH_GROUP_NAME ORDER BY Name';
     
@@ -47,7 +45,6 @@ exports.GetAuthGroups = (req, res) => {
     });
 };
 
-// 사용자 정보 수정
 exports.UpdateUser = (req, res) => {
     const { id } = req.params;
     const { name, nicName } = req.body;
@@ -84,7 +81,6 @@ exports.UpdateUser = (req, res) => {
     });
 };
 
-// 사용자 삭제
 exports.DeleteUser = (req, res) => {
     const { id } = req.params;
 
@@ -107,11 +103,9 @@ exports.DeleteUser = (req, res) => {
     });
 };
 
-// 사용자 권한 그룹 수정
 exports.UpdateUserAuthGroup = (req, res) => {
     const { userId, authGroupId } = req.body;
     
-    // 입력값 검증
     if (!userId) {
         return res.status(400).json({error: '사용자 ID가 필요합니다'});
     }
@@ -136,7 +130,6 @@ exports.UpdateUserAuthGroup = (req, res) => {
             return res.status(500).json({error: '사용자 권한 수정에 실패했습니다'});
         }
 
-        // 로그 기록
         const logQuery = `
             INSERT INTO LOG_history (
                 user_id, 
@@ -153,7 +146,7 @@ exports.UpdateUserAuthGroup = (req, res) => {
         db.query(logQuery, [
             userId,
             logMessage,
-            2, // 권한 변경 로그 코드
+            2, 
             'SYSTEM',
             modifyDate,
             modifyTime
