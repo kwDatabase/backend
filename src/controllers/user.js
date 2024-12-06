@@ -10,9 +10,18 @@ exports.SelectAllUser = (req, res) => {
             U.Nic_Name,
             U.Enter_Date,
             AGN.Name as Auth_Group_Name,
-            AGN.Id as Auth_Group_Id
+            AGN.Id as Auth_Group_Id,
+            COUNT(P.Id) as Product_Count
         FROM USER U
         LEFT JOIN AUTH_GROUP_NAME AGN ON U.AUTH_GROUP_ID = AGN.Id
+        LEFT JOIN Product P ON U.Id = P.user_id
+        GROUP BY 
+            U.Id,
+            U.Name,
+            U.Nic_Name,
+            U.Enter_Date,
+            AGN.Name,
+            AGN.Id
         ORDER BY U.Enter_Date DESC
     `;
     
