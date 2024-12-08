@@ -8,7 +8,10 @@ const cors = require('cors');
 
 
 var indexRouter = require('./src/routes/index');
-var usersRouter = require('./src/routes/admin/user');
+var usersRouter = require('./src/routes/user');
+var loginRouter = require('./src/routes/login');
+var joinRouter = require('./src/routes/join');
+var usersAdminRouter = require('./src/routes/admin/user');
 var categoryRouter = require('./src/routes/admin/category');
 var authRouter = require('./src/routes/admin/auth');
 var dashboardRouter = require('./src/routes/admin/dashboard');
@@ -27,7 +30,11 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/admin/users', usersRouter);
+app.use('/users', usersRouter);
+app.use('/login', loginRouter);
+app.use('/join', joinRouter);
+
+app.use('/admin/users', usersAdminRouter);
 app.use('/admin/category', categoryRouter);
 app.use('/admin/auth', authRouter);
 app.use('/admin/dashboard', dashboardRouter);
