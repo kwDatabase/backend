@@ -24,6 +24,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// 메인
+app.use('/', indexRouter);
+
 // 상품 목록
 const productRouter = require('./src/routes/product');
 app.use('/products', productRouter);
