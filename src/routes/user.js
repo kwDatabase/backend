@@ -4,6 +4,6 @@ const userController = require('../controllers/user');
 
 /* GET example */
 router.get('/', userController.SelectAllUser);
-router.get('/:id', userController.SelectUserById)
+router.get('/:id', userController.SelectUserById);
 
 module.exports = router;
