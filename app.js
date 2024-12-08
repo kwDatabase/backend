@@ -47,7 +47,6 @@ app.use('/admin/auth', authRouter);
 app.use('/admin/dashboard', dashboardRouter);
 
 // 유저 상품 관리
-const productRouter = require('./src/routes/product');
 app.use('/products', productRouter);
 
 // 유저 후기 & 문의 관리

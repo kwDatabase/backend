@@ -23,4 +23,13 @@ router.patch('/:id/inquiries/:inquiryIndex', commentController.updateInquiry);
 // 문의 삭제
 router.delete('/:id/inquiries/:inquiryIndex', commentController.deleteInquiry);
 
+// 대댓글 추가
+router.patch('/:id/inquiries/:inquiryIndex/reply', commentController.addReply);
+
+// 대댓글 수정
+router.patch('/:id/inquiries/:inquiryIndex/reply', commentController.updateReply);
+
+// 대댓글 삭제
+router.delete('/:id/inquiries/:inquiryIndex/reply', commentController.deleteReply);
+
 module.exports = router;

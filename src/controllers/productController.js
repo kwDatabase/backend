@@ -79,6 +79,8 @@ exports.getProductById = (req, res) => {
                     userId: comment.user_id,
                     content: comment.content,
                     date: `${comment.enter_date} ${comment.enter_time}`,
+                    replyContent: comment.reply_content, 
+                    replyDate: `${comment.reply_date} ${comment.reply_time}`, 
                 }));
 
             // 최종 응답
@@ -256,3 +258,4 @@ exports.getCategories = (req, res) => {
         });
     });
 };
+
