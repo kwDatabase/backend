@@ -6,12 +6,14 @@ var logger = require('morgan');
 require('dotenv').config();
 const cors = require('cors');
 
-
 var indexRouter = require('./src/routes/index');
 var usersRouter = require('./src/routes/user');
 
 var app = express();
 app.use(cors());
+
+// 정적 파일 서버 설정
+app.use(express.static(path.join(__dirname, 'public')));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -23,8 +25,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// 메인
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+
+// 상품 목록
+const productRouter = require('./src/routes/product');
+app.use('/products', productRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
