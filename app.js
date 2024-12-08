@@ -7,7 +7,6 @@ require('dotenv').config();
 const cors = require('cors');
 
 var indexRouter = require('./src/routes/index');
-var usersRouter = require('./src/routes/user');
 
 var app = express();
 app.use(cors());
@@ -24,10 +23,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
-// 메인
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 
 // 상품 목록
 const productRouter = require('./src/routes/product');
