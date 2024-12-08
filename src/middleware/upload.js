@@ -13,6 +13,6 @@ const storage = multer.diskStorage({
 
 // multer 인스턴스 생성
 const upload = multer({ storage: storage });
-
+console.log("multer exit");
 // export
 module.exports = upload;

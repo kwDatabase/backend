@@ -53,9 +53,50 @@ exports.getProductById = (req, res) => {
             return res.status(404).json({ error: 'Product not found' });
         }
 
-        res.json(results[0]); // 첫 번째 결과만 반환
+        const product = results[0]; // 첫 번째 결과만 반환
+
+        // 추가: 후기와 문의를 가져오는 쿼리 (rating 포함)
+        db.query('SELECT * FROM Product_Comment WHERE product_id = ?', [productId], (err, commentResults) => {
+            if (err) {
+                console.error('Error fetching comments:', err);
+                return res.status(500).json({ error: 'Internal Server Error' });
+            }
+
+            const reviews = commentResults
+                .filter(comment => comment.status === 0) // 후기
+                .map(comment => ({
+                    id: comment.id,
+                    userId: comment.user_id,
+                    content: comment.content,
+                    date: `${comment.enter_date} ${comment.enter_time}`,
+                    rating: comment.rating // 평점 추가
+                }));
+
+            const inquiries = commentResults
+                .filter(comment => comment.status === 1) // 문의
+                .map(comment => ({
+                    id: comment.id,
+                    userId: comment.user_id,
+                    content: comment.content,
+                    date: `${comment.enter_date} ${comment.enter_time}`,
+                }));
+
+            // 최종 응답
+            res.json({
+                id: product.id,
+                title: product.title,
+                image: product.image,
+                price: product.price,
+                content: product.content,
+                user_name: product.user_name,
+                user_rating: product.user_rating,
+                reviews,
+                inquiries
+            });
+        });
     });
 };
+
 
 // 상품 조회수 증가
 exports.incrementViewCount = (req, res) => {

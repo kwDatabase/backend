@@ -45,6 +45,15 @@ app.use('/admin/users', usersAdminRouter);
 app.use('/admin/category', categoryRouter);
 app.use('/admin/auth', authRouter);
 app.use('/admin/dashboard', dashboardRouter);
+
+// 유저 상품 관리
+const productRouter = require('./src/routes/product');
+app.use('/products', productRouter);
+
+// 유저 후기 & 문의 관리
+const commentRouter = require('./src/routes/comment');
+app.use('/products', commentRouter);
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
