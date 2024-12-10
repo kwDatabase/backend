@@ -52,38 +52,35 @@ exports.getCommentsByProductId = (req, res) => {
 
 // 후기 추가
 exports.addReview = (req, res) => {
-    const productId = req.params.id;
-    const { user_id, content, rating } = req.body;
+    const productId = req.params.id; // URL에서 상품 ID 가져오기
+    const { user_id, content, rating } = req.body; // 요청 본문에서 작성자 ID, 내용, 평점 가져오기
 
     const currentDate = new Date();
-    const enterDate = currentDate.toISOString().split('T')[0].replace(/-/g, '');
-    const enterTime = currentDate.toTimeString().split(' ')[0].slice(0, 5).replace(':', '');
+    const enterDate = currentDate.toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD 형식
+    const enterTime = currentDate.toTimeString().split(' ')[0].slice(0, 5).replace(':', ''); // HHMM 형식
 
-    const query = `
-        INSERT INTO Product_Comment (product_id, user_id, content, enter_user_id, enter_date, enter_time, rating, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    // seller_id는 productId에 해당하는 상품의 user_id로 설정
+    const queryProductSeller = 'SELECT user_id FROM Product WHERE id = ?';
 
-    db.query(query, [productId, user_id, content, user_id, enterDate, enterTime, rating, 0], (err, results) => {
-        if (err) {
-            console.error('Error adding review:', err);
+    db.query(queryProductSeller, [productId], (err, productResults) => {
+        if (err || productResults.length === 0) {
+            console.error('Error fetching product seller:', err);
             return res.status(500).json({ error: 'Internal Server Error' });
         }
 
-        // 평균 평점 업데이트
-        calculateUserAverageRating(user_id, (err, averageRating) => {
+        const sellerId = productResults[0].user_id; // 상품의 판매자 ID
+
+        const query = `
+            INSERT INTO User_Review (product_id, user_id, content, seller_id, enter_user_id, enter_date, enter_time, rating)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        db.query(query, [productId, user_id, content, sellerId, user_id, enterDate, enterTime, rating], (err, results) => {
             if (err) {
-                console.error('Error calculating average rating:', err);
+                console.error('Error adding review:', err);
                 return res.status(500).json({ error: 'Internal Server Error' });
             }
 
-            db.query('UPDATE User SET rating = ? WHERE id = ?', [averageRating, user_id], (err) => {
-                if (err) {
-                    console.error('Error updating user rating:', err);
-                    return res.status(500).json({ error: 'Internal Server Error' });
-                }
-
-                res.status(201).json({ id: results.insertId, message: 'Review added successfully' });
-            });
+            res.status(201).json({ id: results.insertId, message: 'Review added successfully' });
         });
     });
 };
@@ -96,11 +93,15 @@ exports.updateReview = (req, res) => {
 
     // 데이터베이스에서 해당 후기 업데이트
     const query = `
-        UPDATE Product_Comment
-        SET content = ?, rating = ?
+        UPDATE User_Review
+        SET content = ?, rating = ?, enter_user_id = ?, enter_date = ?, enter_time = ?
         WHERE id = ? AND product_id = ?`;
 
-    db.query(query, [content, rating, reviewId, productId], (err, results) => {
+    const currentDate = new Date();
+    const enterDate = currentDate.toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD 형식
+    const enterTime = currentDate.toTimeString().split(' ')[0].slice(0, 5).replace(':', ''); // HHMM 형식
+
+    db.query(query, [content, rating, user_id, enterDate, enterTime, reviewId, productId], (err, results) => {
         if (err) {
             console.error('Error updating review:', err);
             return res.status(500).json({ error: 'Internal Server Error' });
@@ -134,7 +135,7 @@ exports.deleteReview = (req, res) => {
     const productId = req.params.id;
     const reviewId = req.params.reviewIndex;
 
-    db.query('DELETE FROM Product_Comment WHERE id = ? AND product_id = ?', [reviewId, productId], (err, results) => {
+    db.query('DELETE FROM User_Review WHERE id = ? AND product_id = ?', [reviewId, productId], (err, results) => {
         if (err) {
             console.error('Error deleting review:', err);
             return res.status(500).json({ error: 'Internal Server Error' });
@@ -176,8 +177,8 @@ exports.addInquiry = (req, res) => {
 
     // 데이터베이스에 문의 추가
     const query = `
-        INSERT INTO Product_Comment (product_id, user_id, content, enter_date, enter_time, status)
-        VALUES (?, ?, ?, ?, ?, 1)`; // status 1은 문의를 의미
+        INSERT INTO Product_Comment (product_id, user_id, content, enter_date, enter_time)
+        VALUES (?, ?, ?, ?, ?)`; // status 1은 문의를 의미
 
     db.query(query, [productId, asker, content, enterDate, enterTime], (err, results) => {
         if (err) {
@@ -200,7 +201,7 @@ exports.updateInquiry = (req, res) => {
     const query = `
         UPDATE Product_Comment
         SET content = ?
-        WHERE id = ? AND status = 1`; // status 1은 문의를 의미
+        WHERE id = ?`; // status 1은 문의를 의미
 
     db.query(query, [content, inquiryId], (err, results) => {
         if (err) {
@@ -222,7 +223,7 @@ exports.deleteInquiry = (req, res) => {
 
     console.log(req.params);
 
-    db.query('DELETE FROM Product_Comment WHERE id = ? AND status = 1', [inquiryId], (err, results) => {
+    db.query('DELETE FROM Product_Comment WHERE id = ?', [inquiryId], (err, results) => {
         if (err) {
             console.error('Error deleting inquiry:', err);
             return res.status(500).json({ error: 'Internal Server Error' });
@@ -264,7 +265,7 @@ exports.addReply = (req, res) => {
         const query = `
             UPDATE Product_Comment
             SET reply_content = ?, reply_date = ?, reply_time = ?
-            WHERE id = ? AND status = 1`;
+            WHERE id = ?`;  // status 조건 제거
 
         db.query(query, [content, formattedDate, formattedTime, inquiryId], (err, results) => {
             if (err) {
@@ -294,7 +295,7 @@ exports.updateReply = (req, res) => {
     const query = `
         UPDATE Product_Comment
         SET reply_content = ?, reply_date = ?, reply_time = ?
-        WHERE id = ? AND status = 1`;
+        WHERE id = ?`; // status 조건 제거
 
     db.query(query, [content, formattedDate, formattedTime, inquiryId], (err, results) => {
         if (err) {
@@ -317,7 +318,7 @@ exports.deleteReply = (req, res) => {
     const query = `
         UPDATE Product_Comment
         SET reply_content = NULL, reply_date = NULL, reply_time = NULL
-        WHERE id = ? AND status = 1`;
+        WHERE id = ?`; // status 조건 제거
 
     db.query(query, [inquiryId], (err, results) => {
         if (err) {

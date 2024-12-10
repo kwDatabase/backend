@@ -55,50 +55,56 @@ exports.getProductById = (req, res) => {
 
         const product = results[0]; // 첫 번째 결과만 반환
 
-        // 추가: 후기와 문의를 가져오는 쿼리 (rating 포함)
-        db.query('SELECT * FROM Product_Comment WHERE product_id = ?', [productId], (err, commentResults) => {
+        // 추가: User_Review에서 리뷰를 가져오는 쿼리
+        db.query('SELECT * FROM User_Review WHERE product_id = ?', [productId], (err, reviewResults) => {
             if (err) {
-                console.error('Error fetching comments:', err);
+                console.error('Error fetching reviews:', err);
                 return res.status(500).json({ error: 'Internal Server Error' });
             }
 
-            const reviews = commentResults
-                .filter(comment => comment.status === 0) // 후기
-                .map(comment => ({
+            const reviews = reviewResults.map(review => ({
+                id: review.id, // id 추가
+                sellerId: review.seller_id,
+                rating: review.rating,
+                content: review.content,
+                userId: review.user_id,
+                date: `${review.enter_date} ${review.enter_time}`,
+                modifyUserId: review.modify_user_id,
+                modifyDate: `${review.modify_date} ${review.modify_time}`,
+            }));
+
+            // 추가: Product_Comment에서 문의를 가져오는 쿼리
+            db.query('SELECT * FROM Product_Comment WHERE product_id = ?', [productId], (err, commentResults) => {
+                if (err) {
+                    console.error('Error fetching inquiries:', err);
+                    return res.status(500).json({ error: 'Internal Server Error' });
+                }
+
+                const inquiries = commentResults.map(comment => ({
                     id: comment.id,
                     userId: comment.user_id,
                     content: comment.content,
                     date: `${comment.enter_date} ${comment.enter_time}`,
-                    rating: comment.rating // 평점 추가
+                    replyContent: comment.reply_content,
+                    replyDate: `${comment.reply_date} ${comment.reply_time}`,
                 }));
 
-            const inquiries = commentResults
-                .filter(comment => comment.status === 1) // 문의
-                .map(comment => ({
-                    id: comment.id,
-                    userId: comment.user_id,
-                    content: comment.content,
-                    date: `${comment.enter_date} ${comment.enter_time}`,
-                    replyContent: comment.reply_content, 
-                    replyDate: `${comment.reply_date} ${comment.reply_time}`, 
-                }));
-
-            // 최종 응답
-            res.json({
-                id: product.id,
-                title: product.title,
-                image: product.image,
-                price: product.price,
-                content: product.content,
-                user_name: product.user_name,
-                user_rating: product.user_rating,
-                reviews,
-                inquiries
+                // 최종 응답
+                res.json({
+                    id: product.id,
+                    title: product.title,
+                    image: product.image,
+                    price: product.price,
+                    content: product.content,
+                    user_name: product.user_name,
+                    user_rating: product.user_rating,
+                    reviews, // User_Review에서 가져온 리뷰
+                    inquiries // Product_Comment에서 가져온 문의
+                });
             });
         });
     });
 };
-
 
 // 상품 조회수 증가
 exports.incrementViewCount = (req, res) => {
@@ -119,8 +125,12 @@ exports.addProduct = (req, res) => {
     console.log("Request Body:", req.body);
     console.log("Uploaded File:", req.file);
 
-    const { title, content, price, category_id } = req.body;
-    const enter_user_id = user_id; // 현재 사용자 ID
+    if (!req.file) {
+        return res.status(400).json({ error: 'Image file is required' });
+    }
+
+    const { title, content, price, category_id, sub_category_id } = req.body;
+    const enter_user_id = "asdf"; // 현재 사용자 ID
     const enter_date = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD 형식
     const enter_time = new Date().toISOString().slice(11, 19).replace(/:/g, '').slice(0, 4); // HHMM 형식
 
@@ -135,7 +145,8 @@ exports.addProduct = (req, res) => {
         status_id: 1,
         view_count: 0, // 초기 조회수 0
         category_id,
-        enter_user_id: "asdf",
+        category_sub_id : sub_category_id,
+        enter_user_id,
         enter_date,
         enter_time,
         image, // 이미지 URL 추가
