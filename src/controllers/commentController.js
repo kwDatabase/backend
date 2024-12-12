@@ -1,20 +1,5 @@
 const db = require('../config/db');
 
-// 평균 평점 계산 함수
-const calculateUserAverageRating = (userId, callback) => {
-    const query = `
-        SELECT AVG(rating) AS averageRating
-        FROM Product p
-        JOIN Product_Comment c ON p.id = c.product_id
-        WHERE p.user_id = ? AND c.status = 0`; // status 0은 후기를 의미
-
-    db.query(query, [userId], (err, results) => {
-        if (err) return callback(err);
-        callback(null, results[0].averageRating || 0); // 기본값 0
-    });
-    console.log("rating값 수정됨")
-};
-
 // 상품에 대한 후기와 문의 가져오기
 exports.getCommentsByProductId = (req, res) => {
     const productId = req.params.id;
@@ -50,6 +35,59 @@ exports.getCommentsByProductId = (req, res) => {
     });
 };
 
+// 평균 평점 계산 함수
+const calculateUserAverageRating = (userId, callback) => {
+    const query = `
+        SELECT AVG(rating) AS averageRating
+        FROM User_Review
+        WHERE user_id = ?`;
+
+    db.query(query, [userId], (err, results) => {
+        if (err) return callback(err);
+        callback(null, results[0].averageRating || 0); // 기본값 0
+    });
+};
+
+// 평균 평점을 업데이트하는 함수
+const updateUserRating = (productId, callback) => {
+    // 1. 상품의 판매자 ID를 조회
+    const querySellerId = 'SELECT user_id FROM Product WHERE id = ?';
+    
+    db.query(querySellerId, [productId], (err, sellerResults) => {
+        if (err || sellerResults.length === 0) {
+            console.error('Error fetching seller ID:', err);
+            return callback(err);
+        }
+
+        const sellerId = sellerResults[0].user_id; // 판매자 ID
+
+        // 2. 해당 상품에 대한 모든 리뷰의 평점 평균 계산
+        const queryAverageRating = `
+            SELECT ROUND(AVG(rating), 1) AS averageRating
+            FROM User_Review
+            WHERE product_id = ?`;
+
+        db.query(queryAverageRating, [productId], (err, averageResults) => {
+            if (err) {
+                console.error('Error calculating average rating:', err);
+                return callback(err);
+            }
+
+            const averageRating = averageResults[0].averageRating || 0; // 기본값 0
+
+            // 3. 판매자의 평점 업데이트
+            db.query('UPDATE User SET rating = ? WHERE id = ?', [averageRating, sellerId], (err) => {
+                if (err) {
+                    console.error('Error updating user rating:', err);
+                    return callback(err);
+                }
+                console.log(`User ${sellerId} rating updated to ${averageRating}`);
+                callback(null); // 성공적으로 업데이트된 경우 콜백 호출
+            });
+        });
+    });
+};
+
 // 후기 추가
 exports.addReview = (req, res) => {
     const productId = req.params.id; // URL에서 상품 ID 가져오기
@@ -80,7 +118,15 @@ exports.addReview = (req, res) => {
                 return res.status(500).json({ error: 'Internal Server Error' });
             }
 
-            res.status(201).json({ id: results.insertId, message: 'Review added successfully' });
+            // 판매자의 평균 평점 업데이트
+            updateUserRating(productId, (err) => {
+                if (err) {
+                    console.error('Error updating seller rating after adding review:', err);
+                    return res.status(500).json({ error: 'Internal Server Error' });
+                }
+
+                res.status(201).json({ id: results.insertId, message: 'Review added successfully' });
+            });
         });
     });
 };
@@ -91,15 +137,15 @@ exports.updateReview = (req, res) => {
     const reviewId = req.params.reviewIndex; // reviewId 가져오기
     const { content, rating, user_id } = req.body; // user_id도 요청 본문에서 가져옵니다.
 
+    const currentDate = new Date();
+    const enterDate = currentDate.toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD 형식
+    const enterTime = currentDate.toTimeString().split(' ')[0].slice(0, 5).replace(':', ''); // HHMM 형식
+
     // 데이터베이스에서 해당 후기 업데이트
     const query = `
         UPDATE User_Review
         SET content = ?, rating = ?, enter_user_id = ?, enter_date = ?, enter_time = ?
         WHERE id = ? AND product_id = ?`;
-
-    const currentDate = new Date();
-    const enterDate = currentDate.toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD 형식
-    const enterTime = currentDate.toTimeString().split(' ')[0].slice(0, 5).replace(':', ''); // HHMM 형식
 
     db.query(query, [content, rating, user_id, enterDate, enterTime, reviewId, productId], (err, results) => {
         if (err) {
@@ -111,16 +157,18 @@ exports.updateReview = (req, res) => {
             return res.status(404).json({ error: 'Review not found' });
         }
 
-        // 평균 평점 업데이트
-        calculateUserAverageRating(user_id, (err, averageRating) => {
-            if (err) {
-                console.error('Error calculating average rating:', err);
+        // 판매자의 평균 평점 업데이트
+        const queryProductSeller = 'SELECT seller_id FROM User_Review WHERE id = ?';
+        db.query(queryProductSeller, [reviewId], (err, sellerResults) => {
+            if (err || sellerResults.length === 0) {
+                console.error('Error fetching seller for review:', err);
                 return res.status(500).json({ error: 'Internal Server Error' });
             }
+            const sellerId = sellerResults[0].seller_id;
 
-            db.query('UPDATE User SET rating = ? WHERE id = ?', [averageRating, user_id], (err) => {
+            updateUserRating(productId, (err) => {
                 if (err) {
-                    console.error('Error updating user rating:', err);
+                    console.error('Error updating seller rating after updating review:', err);
                     return res.status(500).json({ error: 'Internal Server Error' });
                 }
 
@@ -135,27 +183,34 @@ exports.deleteReview = (req, res) => {
     const productId = req.params.id;
     const reviewId = req.params.reviewIndex;
 
-    db.query('DELETE FROM User_Review WHERE id = ? AND product_id = ?', [reviewId, productId], (err, results) => {
-        if (err) {
-            console.error('Error deleting review:', err);
+    console.log(productId, "and", reviewId);
+
+    // 1. 판매자의 ID를 가져옵니다.
+    const queryProductSeller = 'SELECT seller_id FROM User_Review WHERE id = ? AND product_id = ?';
+    
+    db.query(queryProductSeller, [reviewId, productId], (err, sellerResults) => {
+        if (err || sellerResults.length === 0) {
+            console.error('Error fetching seller for review:', err);
             return res.status(500).json({ error: 'Internal Server Error' });
         }
 
-        if (results.affectedRows === 0) {
-            return res.status(404).json({ error: 'Review not found' });
-        }
+        const sellerId = sellerResults[0].seller_id; // 판매자 ID
 
-        // 평균 평점 업데이트
-        const user_id = req.body.user_id; // user_id를 요청 본문에서 가져옴
-        calculateUserAverageRating(user_id, (err, averageRating) => {
+        // 2. 리뷰 삭제
+        db.query('DELETE FROM User_Review WHERE id = ? AND product_id = ?', [reviewId, productId], (err, results) => {
             if (err) {
-                console.error('Error calculating average rating:', err);
+                console.error('Error deleting review:', err);
                 return res.status(500).json({ error: 'Internal Server Error' });
             }
 
-            db.query('UPDATE User SET rating = ? WHERE id = ?', [averageRating, user_id], (err) => {
+            if (results.affectedRows === 0) {
+                return res.status(404).json({ error: 'Review not found' });
+            }
+
+            // 3. 판매자의 평균 평점 업데이트
+            updateUserRating(productId, (err) => { // productId를 넘겨서 업데이트
                 if (err) {
-                    console.error('Error updating user rating:', err);
+                    console.error('Error updating seller rating after deleting review:', err);
                     return res.status(500).json({ error: 'Internal Server Error' });
                 }
 
