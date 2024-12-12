@@ -232,10 +232,10 @@ exports.addInquiry = (req, res) => {
 
     // 데이터베이스에 문의 추가
     const query = `
-        INSERT INTO Product_Comment (product_id, user_id, content, enter_date, enter_time)
-        VALUES (?, ?, ?, ?, ?)`; // status 1은 문의를 의미
+        INSERT INTO Product_Comment (product_id, user_id, content, enter_user_id, enter_date, enter_time)
+        VALUES (?, ?, ?, ?, ?, ?)`;
 
-    db.query(query, [productId, asker, content, enterDate, enterTime], (err, results) => {
+    db.query(query, [productId, asker, content, asker, enterDate, enterTime], (err, results) => {
         if (err) {
             console.error('Error adding inquiry:', err);
             return res.status(500).json({ error: 'Internal Server Error' });
@@ -292,10 +292,10 @@ exports.deleteInquiry = (req, res) => {
     });
 };
 
-// 대댓글 추가 API
+// 문의답변 추가 API
 exports.addReply = (req, res) => {
     const inquiryId = req.params.inquiryIndex; // 문의 ID
-    const { content } = req.body; // 대댓글 내용
+    const { content } = req.body; // 문의답변 내용
 
     // product 테이블에서 user_id를 가져오는 쿼리
     const getUserIdQuery = `SELECT user_id FROM Product WHERE id = ?`;
@@ -320,7 +320,7 @@ exports.addReply = (req, res) => {
         const query = `
             UPDATE Product_Comment
             SET reply_content = ?, reply_date = ?, reply_time = ?
-            WHERE id = ?`;  // status 조건 제거
+            WHERE id = ?`; 
 
         db.query(query, [content, formattedDate, formattedTime, inquiryId], (err, results) => {
             if (err) {
@@ -337,7 +337,7 @@ exports.addReply = (req, res) => {
     });
 };
 
-// 대댓글 수정 API
+// 문의답변 수정 API
 exports.updateReply = (req, res) => {
     const inquiryId = req.params.inquiryIndex; // 문의 ID
     const { content } = req.body; // 수정할 대댓글 내용
@@ -366,7 +366,7 @@ exports.updateReply = (req, res) => {
     });
 };
 
-// 대댓글 삭제 API
+// 문의답변 삭제 API
 exports.deleteReply = (req, res) => {
     const inquiryId = req.params.inquiryIndex; // 문의 ID
 
