@@ -6,7 +6,7 @@ exports.getProducts = (req, res) => {
     const query = `
         SELECT p.id, p.user_id, p.title, p.content, p.price, p.status_id, p.view_count, p.image,
                p.category_id, p.enter_user_id, p.enter_date, p.enter_time, 
-               u.rating AS rating
+               u.rating AS rating, u.Nic_Name AS user_name
         FROM Product p
         LEFT JOIN User u ON p.enter_user_id = u.id;`;
 
@@ -20,6 +20,7 @@ exports.getProducts = (req, res) => {
         const products = results.map(product => ({
             id: product.id,
             user_id: product.user_id,
+            user_name: product.user_name,
             title: product.title,
             content: product.content,
             price: product.price,
@@ -31,6 +32,7 @@ exports.getProducts = (req, res) => {
         }));
 
         res.json(products);
+        console.log("debug: ",products);
     });
 };
 
@@ -38,7 +40,7 @@ exports.getProducts = (req, res) => {
 exports.getProductById = (req, res) => {
     const productId = req.params.id; // URL 파라미터로부터 상품 ID를 가져옴
     const query = `
-        SELECT p.id, p.title, p.image, p.price, p.content, u.name AS user_name, u.rating AS user_rating
+        SELECT p.id, p.title, p.image, p.price, p.content, p.status_id, u.Nic_Name AS user_name, u.rating AS user_rating
         FROM Product p
         JOIN User u ON p.user_id = u.id
         WHERE p.id = ?`;
@@ -96,11 +98,14 @@ exports.getProductById = (req, res) => {
                     image: product.image,
                     price: product.price,
                     content: product.content,
+                    status: product.status_id,
+                    seller_id: product.seller_id,
                     user_name: product.user_name,
                     user_rating: product.user_rating,
                     reviews, // User_Review에서 가져온 리뷰
                     inquiries // Product_Comment에서 가져온 문의
                 });
+                
             });
         });
     });
