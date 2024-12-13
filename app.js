@@ -10,6 +10,7 @@ var indexRouter = require('./src/routes/index');
 var usersRouter = require('./src/routes/user');
 var loginRouter = require('./src/routes/login');
 var joinRouter = require('./src/routes/join');
+var mypageRouter = require('./src/routes/mypage');
 var usersAdminRouter = require('./src/routes/admin/user');
 var categoryRouter = require('./src/routes/admin/category');
 var authRouter = require('./src/routes/admin/auth');
@@ -40,7 +41,7 @@ app.use('/products', productRouter);
 app.use('/users', usersRouter);
 app.use('/login', loginRouter);
 app.use('/join', joinRouter);
-
+app.use('/mypage', mypageRouter);
 app.use('/admin/users', usersAdminRouter);
 app.use('/admin/category', categoryRouter);
 app.use('/admin/auth', authRouter);
