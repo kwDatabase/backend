@@ -278,3 +278,37 @@ exports.getCategories = (req, res) => {
     });
 };
 
+// 상품 구매
+exports.purchaseProduct = (req, res) => {
+    const productId = req.params.id;
+
+    // 상품 상태를 2로 업데이트
+    const query = 'UPDATE Product SET status_id = ? WHERE id = ?';
+    db.query(query, [2, productId], (error, results) => {
+        if (error) {
+            console.error('Error purchasing product:', error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        // 상태 업데이트가 성공적으로 완료된 경우
+        res.json({ message: '상품 구매가 완료되었습니다.' });
+    });
+};
+
+// 상품 판매 중단
+exports.stopProductSale = (req, res) => {
+    const productId = req.params.id;
+    console.log("start backlog", productId);
+
+    // 상품 상태를 3으로 업데이트
+    const query = 'UPDATE Product SET status_id = ? WHERE id = ?';
+    db.query(query, [3, productId], (error, results) => {
+        if (error) {
+            console.error('Error stopping product sale:', error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        // 상태 업데이트가 성공적으로 완료된 경우
+        res.json({ message: '상품 판매가 중지되었습니다.' });
+    });
+};
