@@ -27,4 +27,11 @@ router.delete('/edit/:id', productController.deleteProduct);
 // 상품 조회수 증가 API 추가
 router.put('/:id/views', productController.incrementViewCount);
 
+// 상품 구매 API 추가
+router.post('/purchase/:id', productController.purchaseProduct);
+
+// 상품 판매 중지 API 추가
+router.patch('/stop-sale/:id', productController.stopProductSale);
+
+
 module.exports = router;
