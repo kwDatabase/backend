@@ -6,7 +6,6 @@ var logger = require('morgan');
 require('dotenv').config();
 const cors = require('cors');
 
-
 var indexRouter = require('./src/routes/index');
 var usersRouter = require('./src/routes/user');
 var loginRouter = require('./src/routes/login');
@@ -15,9 +14,13 @@ var usersAdminRouter = require('./src/routes/admin/user');
 var categoryRouter = require('./src/routes/admin/category');
 var authRouter = require('./src/routes/admin/auth');
 var dashboardRouter = require('./src/routes/admin/dashboard');
+const productRouter = require('./src/routes/product');
 
 var app = express();
 app.use(cors());
+
+// 정적 파일 서버 설정
+app.use(express.static(path.join(__dirname, 'public')));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -29,7 +32,11 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// 메인
 app.use('/', indexRouter);
+
+app.use('/products', productRouter);
+
 app.use('/users', usersRouter);
 app.use('/login', loginRouter);
 app.use('/join', joinRouter);
@@ -38,6 +45,14 @@ app.use('/admin/users', usersAdminRouter);
 app.use('/admin/category', categoryRouter);
 app.use('/admin/auth', authRouter);
 app.use('/admin/dashboard', dashboardRouter);
+
+// 유저 상품 관리
+app.use('/products', productRouter);
+
+// 유저 후기 & 문의 관리
+const commentRouter = require('./src/routes/comment');
+app.use('/products', commentRouter);
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
