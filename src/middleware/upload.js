@@ -1,5 +1,6 @@
 const multer = require('multer');
 const path = require('path');
+
 const fs = require('fs');
 
 // 파일 저장 경로
@@ -14,6 +15,7 @@ if (!fs.existsSync(uploadPath)) {
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadPath); // 올바른 파일을 저장할 경로
+
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + path.extname(file.originalname)); // 파일 이름 설정

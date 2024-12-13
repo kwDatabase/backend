@@ -33,4 +33,5 @@ router.post('/purchase/:id', productController.purchaseProduct);
 // 상품 판매 중지 API 추가
 router.patch('/stop-sale/:id', productController.stopProductSale);
 
+
 module.exports = router;

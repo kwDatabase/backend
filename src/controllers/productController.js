@@ -34,7 +34,6 @@ exports.getProducts = (req, res) => {
         }));
 
         res.json(products);
-        console.log("debug: ",products);
     });
 };
 
@@ -43,6 +42,7 @@ exports.getProductById = (req, res) => {
     const productId = req.params.id; // URL 파라미터로부터 상품 ID를 가져옴
     const query = `
         SELECT p.id, p.title, p.image, p.price, p.content, p.status_id, p.user_id, u.Nic_Name AS user_name, u.rating AS user_rating
+
         FROM Product p
         JOIN User u ON p.user_id = u.id
         WHERE p.id = ?`;
@@ -56,6 +56,7 @@ exports.getProductById = (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ error: 'Product not found' });
         }
+
 
         const product = results[0]; // 첫 번째 결과만 반환
 
@@ -138,6 +139,7 @@ exports.addProduct = (req, res) => {
     }
 
     const { title, content, price, category_id, sub_category_id, user_id } = req.body;
+
     const enter_user_id = user_id; // 현재 사용자 ID
     const enter_date = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD 형식
     const enter_time = new Date().toISOString().slice(11, 19).replace(/:/g, '').slice(0, 4); // HHMM 형식
