@@ -14,7 +14,7 @@ var mypageRouter = require('./src/routes/mypage');
 var usersAdminRouter = require('./src/routes/admin/user');
 var categoryRouter = require('./src/routes/admin/category');
 var authRouter = require('./src/routes/admin/auth');
-var dashboardRouter = require('./src/routes/admin/dashboard');
+var dashboardRouter = require('./src/routes/dashboard');
 const productRouter = require('./src/routes/product');
 
 var app = express();
@@ -45,7 +45,7 @@ app.use('/mypage', mypageRouter);
 app.use('/admin/users', usersAdminRouter);
 app.use('/admin/category', categoryRouter);
 app.use('/admin/auth', authRouter);
-app.use('/admin/dashboard', dashboardRouter);
+app.use('/dashboard', dashboardRouter);
 
 // 유저 상품 관리
 app.use('/products', productRouter);
