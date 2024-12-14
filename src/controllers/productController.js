@@ -5,10 +5,13 @@ const upload = require('../middleware/upload'); // multer 설정
 exports.getProducts = (req, res) => {
     const query = `
         SELECT p.id, p.user_id, p.title, p.content, p.price, p.status_id, p.view_count, p.image,
-               p.category_id, p.enter_user_id, p.enter_date, p.enter_time, 
-               u.rating AS rating, u.Nic_Name AS user_name
+               p.category_id, p.category_sub_id, p.enter_user_id, p.enter_date, p.enter_time, 
+               u.rating AS rating, u.Nic_Name AS user_name,
+               c.name AS category_name, sc.name AS sub_category_name
         FROM Product p
-        LEFT JOIN User u ON p.enter_user_id = u.id;`;
+        LEFT JOIN User u ON p.enter_user_id = u.id
+        LEFT JOIN Product_Category c ON p.category_id = c.id
+        LEFT JOIN Product_Sub_Category sc ON p.category_sub_id = sc.sub_id;`;
 
     db.query(query, (err, results) => {
         if (err) {
@@ -28,6 +31,9 @@ exports.getProducts = (req, res) => {
             view_count: product.view_count,
             image: product.image,
             category_id: product.category_id,
+            category_sub_id: product.category_sub_id,
+            category_name: product.category_name, 
+            sub_category_name: product.sub_category_name,
             rating: product.rating || 0, // 평점 정보, 기본값 0
             enter_date: product.enter_date,
             enter_time: product.enter_time,
@@ -41,12 +47,16 @@ exports.getProducts = (req, res) => {
 exports.getProductById = (req, res) => {
     const productId = req.params.id; // URL 파라미터로부터 상품 ID를 가져옴
     const query = `
-        SELECT p.id, p.title, p.image, p.price, p.content, p.status_id, p.user_id, u.Nic_Name AS user_name, u.rating AS user_rating
+        SELECT p.id, p.title, p.image, p.price, p.content, p.status_id, p.user_id,
+        p.category_id, p.category_sub_id, u.Nic_Name AS user_name, u.rating AS user_rating,
+            c.name AS category_name, sc.name AS sub_category_name
 
         FROM Product p
         JOIN User u ON p.user_id = u.id
-        WHERE p.id = ?`;
-
+        LEFT JOIN Product_Category c ON p.category_id = c.id
+        LEFT JOIN Product_Sub_Category sc ON p.category_sub_id = sc.sub_id
+        WHERE p.id = ? `;
+ 
     db.query(query, [productId], (err, results) => {
         if (err) {
             console.error('Error fetching product:', err);
@@ -73,9 +83,9 @@ exports.getProductById = (req, res) => {
                 rating: review.rating,
                 content: review.content,
                 userId: review.user_id,
-                date: `${review.enter_date} ${review.enter_time}`,
+                date: `${ review.enter_date } ${ review.enter_time } `,
                 modifyUserId: review.modify_user_id,
-                modifyDate: `${review.modify_date} ${review.modify_time}`,
+                modifyDate: `${ review.modify_date } ${ review.modify_time } `,
             }));
 
             // 추가: Product_Comment에서 문의를 가져오는 쿼리
@@ -89,9 +99,9 @@ exports.getProductById = (req, res) => {
                     id: comment.id,
                     userId: comment.user_id,
                     content: comment.content,
-                    date: `${comment.enter_date} ${comment.enter_time}`,
+                    date: `${ comment.enter_date } ${ comment.enter_time } `,
                     replyContent: comment.reply_content,
-                    replyDate: `${comment.reply_date} ${comment.reply_time}`,
+                    replyDate: `${ comment.reply_date } ${ comment.reply_time } `,
                 }));
 
                 // 최종 응답
@@ -106,10 +116,12 @@ exports.getProductById = (req, res) => {
                     user_id: product.user_id,
                     user_rating: product.user_rating,
                     nicNmae: product.user_name,
+                    category_name: product.category_name, // 카테고리 이름 추가
+                    sub_category_name: product.sub_category_name, // 서브 카테고리 이름 추가
                     reviews, // User_Review에서 가져온 리뷰
-                    inquiries // Product_Comment에서 가져온 문의
+                    inquiries // Product_Comment에서 가져온 문의 
                 });
-                
+
             });
         });
     });
@@ -145,7 +157,7 @@ exports.addProduct = (req, res) => {
     const enter_time = new Date().toISOString().slice(11, 19).replace(/:/g, '').slice(0, 4); // HHMM 형식
 
     // 이미지 파일 경로를 저장
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    const image = req.file ? `/ uploads / ${ req.file.filename } ` : null;
 
     const newProduct = {
         user_id,
@@ -155,7 +167,7 @@ exports.addProduct = (req, res) => {
         status_id: 1,
         view_count: 0, // 초기 조회수 0
         category_id,
-        category_sub_id : sub_category_id,
+        category_sub_id: sub_category_id,
         enter_user_id,
         enter_date,
         enter_time,
@@ -182,7 +194,7 @@ exports.getProductForEdit = (req, res) => {
         SELECT p.id, p.title, p.image, p.price, p.content, p.category_id, p.status_id, u.name AS user_name, u.rating AS user_rating
         FROM Product p
         JOIN User u ON p.user_id = u.id
-        WHERE p.id = ?`;
+        WHERE p.id = ? `;
 
     db.query(query, [productId], (err, results) => {
         if (err) {
