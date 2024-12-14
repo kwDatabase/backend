@@ -272,8 +272,8 @@ exports.deleteProduct = (req, res) => {
 
 // 카테고리 및 서브 카테고리 조회
 exports.getCategories = (req, res) => {
-    const queryCategories = 'SELECT * FROM Product_Category';
-    const querySubCategories = 'SELECT * FROM Product_Sub_Category';
+    const queryCategories = 'SELECT id, name FROM Product_Category';
+    const querySubCategories = 'SELECT sub_id, category_id, name FROM Product_Sub_Category';
 
     db.query(queryCategories, (err, categories) => {
         if (err) {
