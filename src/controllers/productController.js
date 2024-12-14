@@ -157,7 +157,7 @@ exports.addProduct = (req, res) => {
     const enter_time = new Date().toISOString().slice(11, 19).replace(/:/g, '').slice(0, 4); // HHMM 형식
 
     // 이미지 파일 경로를 저장
-    const image = req.file ? `/ uploads / ${ req.file.filename } ` : null;
+    const image = req.file ? `/uploads/${ req.file.filename }` : null;
 
     const newProduct = {
         user_id,
