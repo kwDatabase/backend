@@ -10,6 +10,6 @@ router.delete('/:id', userController.DeleteUser);
 
 router.get('/auth-groups', userController.GetAuthGroups);
 
-router.put('/auth-group', userController.UpdateUserAuthGroup);
+router.put('/auth-group/:id', userController.UpdateUserAuthGroup);
 
 module.exports = router;
